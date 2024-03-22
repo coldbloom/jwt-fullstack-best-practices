@@ -11,3 +11,17 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+body {
+  animation: appearance 0.3s;
+}
+
+.page {
+  animation: appearance 0.3s;
+}
+
+@keyframes appearance {
+  0% {
+    opacity: 0;
+  }
+}

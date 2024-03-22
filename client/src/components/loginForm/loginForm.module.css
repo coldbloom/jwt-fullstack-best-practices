@@ -1,0 +1,27 @@
+.form_wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: lightgray;
+
+    input {
+        width: 100px;
+    }
+
+    select:focus {
+
+    }
+
+    button {
+        padding: 5px 12px 5px 12px;
+        border-radius: 5px;
+        border: 2px solid gray;
+    }
+
+    button:active {
+        box-shadow: 0 5px #666;
+        transform: translateY(2px);
+    }
+
+}

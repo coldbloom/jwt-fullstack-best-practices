@@ -6,7 +6,16 @@
     background-color: lightgray;
 
     input {
-        width: 100px;
+        padding: 5px 12px 5px 12px;
+        border: 2px solid gray;
+        border-radius: 5px;
+        width: 150px;
+
+        margin-top: 10px;
+    }
+
+    input:focus-visible {
+        border-color: black;
     }
 
     select:focus {
@@ -17,6 +26,8 @@
         padding: 5px 12px 5px 12px;
         border-radius: 5px;
         border: 2px solid gray;
+
+        margin-top: 10px;
     }
 
     button:active {

@@ -25,3 +25,5 @@ body {
     opacity: 0;
   }
 }
+
+input:focus-visible { outline: none; }

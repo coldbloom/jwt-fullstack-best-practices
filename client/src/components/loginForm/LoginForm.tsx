@@ -1,6 +1,6 @@
 import React from 'react';
 import s from './loginForm.module.css'
-import { useForm, SubmitHandler } from "react-hook-form";
+import {useForm, SubmitHandler} from "react-hook-form";
 
 type Inputs = {
     example: string,
@@ -13,8 +13,10 @@ const LoginForm = () => {
         handleSubmit,
         watch,
         formState: formState,
-    } = useForm<Inputs>()
-    const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data, formState);
+    } = useForm<Inputs>({
+        mode: "onBlur" // режим валидации ошибок - на onBlur (популярный)
+    })
+    const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data, formState, formState.isSubmitting, formState.errors);
 
     console.log(watch("example"));
     console.log(watch("exampleRequired"));
@@ -24,18 +26,32 @@ const LoginForm = () => {
               className={s.form_wrapper}
         >
             <input
-                type="text"
-                defaultValue="test"
-                {...register("example")}
+                // defaultValue="test"
+                placeholder="Логин"
+                {...register("example", {
+                    required: "Поле обязательно к заполнению",
+                    minLength: 4,
+                    maxLength: 20
+                })}
             />
 
             <input
-                type="text"
-                defaultValue="required value"
-                {...register("exampleRequired")}
+                placeholder="Пароль"
+                // defaultValue="required value"
+                {...register("exampleRequired", {
+                    required: true,
+                    minLength: 4,
+                    maxLength: 8
+                })}
             />
 
-            <button type="submit">
+            <div>
+                {formState.errors.example && <p>{formState.errors.example.message || 'Другая ошибка'}</p>}
+            </div>
+
+            <button type="submit"
+                // disabled={formState.isDirty}
+            >
                 Войти
             </button>
         </form>

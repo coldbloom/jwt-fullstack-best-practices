@@ -37,3 +37,17 @@
     transform: rotate(360deg);
   }
 }
+
+nav {
+  padding: 20px 0 40px 0;
+
+  a {
+    margin-right: 20px;
+    font-size: 20px;
+    color: #282c34;
+  }
+}
+
+nav a:last-child {
+  margin: 0;
+}

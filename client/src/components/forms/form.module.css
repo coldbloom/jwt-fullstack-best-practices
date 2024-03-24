@@ -3,13 +3,27 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background-color: lightgray;
+
+    .input_wrapper {
+        position: relative;
+        height: 60px;
+    }
+
+     .error_text {
+         position: absolute;
+         top: 40px;
+         left: 0;
+         color: red;
+         font-size: 14px;
+         font-weight: 500;
+         text-align: right;
+     }
 
     input {
         padding: 5px 12px 5px 12px;
         border: 2px solid gray;
         border-radius: 5px;
-        width: 150px;
+        width: 300px;
 
         margin-top: 10px;
     }
@@ -26,12 +40,15 @@
         padding: 5px 12px 5px 12px;
         border-radius: 5px;
         border: 2px solid gray;
+        background-color: lightgreen;
+        cursor: pointer;
 
         margin-top: 10px;
+        margin-bottom: 10px;
     }
 
     button:active {
-        box-shadow: 0 5px #666;
+        /*box-shadow: 0 5px #666;*/
         transform: translateY(2px);
     }
 

@@ -1,19 +1,57 @@
+const {
+    signUpService,
+    signInService,
+    logoutService,
+    refreshService
+} = require('../services/authService')
+
 class AuthController {
-    static async signIn(req, res){
+    async signIn(req, res){
+        try {
 
+        } catch (e) {
+            console.log(e)
+        }
     }
 
-    static async signUp(req, res) {
+    async signUp(req, res) {
+        try {
+            const fingerprint = req;
+            const { userName, password } = req.body;
 
+            try {
+                await signUpService({ userName, password, fingerprint });
+            } catch (error) {
+                res.status(error.status || 500).json(error);
+            }
+        } catch (e) {
+            console.log(e)
+        }
     }
 
-    static async refresh(req, res) {
+    async refresh(req, res) {
+        try {
 
+        } catch (e) {
+            console.log(e)
+        }
     }
 
-    static async logout(req, res) {
+    async logout(req, res) {
+        try {
 
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    async testRequest(req, res) {
+        try {
+            res.send(200, 'Тестовый гет запрос')
+        } catch (e) {
+            console.log(e)
+        }
     }
 }
 
-export default AuthController
+module.exports = new AuthController()

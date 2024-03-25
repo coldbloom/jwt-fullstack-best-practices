@@ -2,6 +2,7 @@ import React from 'react';
 import {useForm, SubmitHandler} from "react-hook-form"
 import s from "./form.module.css"
 import {getValue} from "@testing-library/user-event/dist/utils";
+import axios from "axios";
 
 type Inputs = {
     login: string,
@@ -26,8 +27,11 @@ const RegistrationForm = () => {
         mode: "onBlur"
     });
 
-    const onSubmit: SubmitHandler<Inputs> = () => {
-
+    const onSubmit: SubmitHandler<Inputs> = (data) => {
+        axios.post(`${process.env.REACT_APP_SERVER_URL}/auth/signUp`, {
+            name: data.login,
+            password: data.password
+        }).then(res => console.log(res.data))
     }
 
     return (

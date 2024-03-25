@@ -7,6 +7,8 @@ const router = require('./routes/index')
 const {connectDatabase} = require('./connctDatabase')
 const Fingerprint = require("express-fingerprint");
 
+// node-modules clean
+
 const PORT = process.env.PORT || 5000;
 
 const app = express();

@@ -60,7 +60,7 @@ const LoginForm = () => {
                 }
             </div>
 
-            <button type="submit" disabled={!formState.isValid}>
+            <button type="submit">
                 Войти
             </button>
         </form>

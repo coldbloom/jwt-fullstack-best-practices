@@ -2,6 +2,7 @@ import React, {Dispatch} from 'react';
 import {useForm} from "react-hook-form";
 import s from './form.module.css'
 import axios from "axios";
+import {log} from "node:util";
 
 type TPost = {
     id: string,

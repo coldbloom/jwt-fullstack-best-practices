@@ -5,6 +5,6 @@ const router = Router();
 
 router.post("/add", PostsController.add)
 router.delete("/delete/:id", PostsController.delete)
-router.get('', PostsController.getAll)
+router.get('/', PostsController.getAll)
 
 export default router;

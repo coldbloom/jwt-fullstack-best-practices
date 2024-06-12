@@ -1,6 +1,7 @@
-import React from 'react';
+import { useContext } from 'react';
+import { AuthContext } from "./context/AuthContext";
 import './App.css';
-import {Routes, Route, Navigate, Link} from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 
 import Demo from "./pages/Demo";
 import SignIn from "./pages/SignIn";
@@ -8,17 +9,28 @@ import SignUp from "./pages/SignUp";
 
 import Nav from "./components/Nav";
 
+import { SnackbarProvider } from "notistack";
+
 function App() {
+  const { isUserLogged } = useContext(AuthContext);
+
   return (
-      <div className="App">
-          <Nav />
-          <Routes>
+    <div className="App">
+      <SnackbarProvider>
+        <Nav />
+        <Routes>
+          {isUserLogged ? (
+            <Route path="demo" element={<Demo />} />
+          ) : (
+            <>
               <Route path="sign-in" element={<SignIn />} />
               <Route path="sign-up" element={<SignUp />} />
-              <Route path="demo" element={<Demo />} />
-              <Route path="*" element={<Navigate to={"sign-in"}/>} />
-          </Routes>
-      </div>
+            </>
+          )}
+          <Route path="*" element={<Navigate to={isUserLogged ? "demo" : "sign-in"} />} />
+        </Routes>
+      </SnackbarProvider>
+    </div>
   );
 }
 

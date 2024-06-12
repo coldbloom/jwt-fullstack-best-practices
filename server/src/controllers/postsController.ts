@@ -6,7 +6,8 @@ class PostsController {
     }
 
     static async getAll(req: Request, res: Response) {
-
+        console.log('getAll');
+        return res.status(200).json('get req done');
     }
 
     static async delete(req: Request, res: Response) {

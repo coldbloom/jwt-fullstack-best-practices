@@ -1,8 +1,8 @@
-import React from 'react';
-import {useForm, SubmitHandler} from "react-hook-form"
-import s from "./form.module.css"
-import {getValue} from "@testing-library/user-event/dist/utils";
-import axios from "axios";
+import { useContext } from 'react';
+import { useForm, SubmitHandler } from 'react-hook-form'
+import { AuthContext } from "../../context/AuthContext";
+import s from './form.module.css'
+import {InputField} from "./InputField";
 
 type Inputs = {
     login: string,
@@ -17,6 +17,8 @@ const defaultValues = {
 }
 
 const RegistrationForm = () => {
+    const { handleSignUp } = useContext(AuthContext);
+
     const {
         register,
         handleSubmit,
@@ -27,11 +29,12 @@ const RegistrationForm = () => {
         mode: "onBlur"
     });
 
-    const onSubmit: SubmitHandler<Inputs> = (data) => {
-        axios.post(`${process.env.REACT_APP_SERVER_URL}/auth/signUp`, {
-            name: data.login,
-            password: data.password
-        }).then(res => console.log(res.data))
+    const onSubmit: SubmitHandler<Inputs> = async (data) => {
+        try {
+            await handleSignUp({ login: data.login, password: data.password })
+        } catch (error) {
+            console.log('ddd')
+        }
     }
 
     return (
@@ -45,21 +48,16 @@ const RegistrationForm = () => {
                         required: "Введите логин!"
                     })}
                 />
-                {errors.login &&
-                    <span className={s.error_text}>{errors.login.message}</span>
-                }
-
+                {errors.login && <span className={s.error_text}>{errors.login.message}</span>}
             </div>
             <div className={s.input_wrapper}>
                 <input
-                    placeholder="пароль"
+                    placeholder="Пароль"
                     {...register("password", {
                         required: "Введите пароль!"
                     })}
                 />
-                {errors.password &&
-                    <span className={s.error_text}>{errors.password.message}</span>
-                }
+                {errors.password && <span className={s.error_text}>{errors.password.message}</span>}
             </div>
             <div className={s.input_wrapper}>
                 <input
@@ -69,10 +67,12 @@ const RegistrationForm = () => {
                         validate: (value) => value === watch("password") || "Пароли не совпадают"
                     })}
                 />
-                {errors.confirmPassword &&
-                    <span className={s.error_text}>{errors.confirmPassword.message}</span>
-                }
+                {errors.confirmPassword && <span className={s.error_text}>{errors.confirmPassword.message}</span>}
             </div>
+
+            {/*<InputField placeholder="Логин" name="login" error={errors.login} register={register} watch={watch} />*/}
+
+            {/*<InputField placeholder="Пароль" name="password" error={errors.password} register={register} watch={watch} />*/}
 
             <button type="submit">
                 Зарегистрироваться

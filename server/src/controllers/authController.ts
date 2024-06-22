@@ -9,6 +9,10 @@ import jwt, {JwtPayload} from "jsonwebtoken";
 import dotenv from "dotenv"
 dotenv.config();
 
+if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+  throw new Error("ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET must be defined in environment variables");
+}
+
 type TPayload = {
   id: number;
   login: string;
@@ -17,41 +21,39 @@ type TPayload = {
 
 class AuthController {
   static async signup(req: Request, res: Response) {
+    const { login, password } = req.body;
+    const { fingerprint } = req;
+
     try {
-      const browserFingerprint = req.fingerprint;
-      const { login, password } = req.body;
-
       const userRepository = AppDataSource.getRepository(User);
-
-      //* Проверяем, существует ли пользователь с таким логином */
       const existingUser = await userRepository.findOne({ where: {login} });
 
+      // Проверяем, существует ли пользователь с таким логином
       if (existingUser) {
-        //* Если пользователь существует, отправляем сообщение об ошибке */
         return res.status(400).send('Пользователь с таким логином уже существует');
       }
 
-      const hashPassword = bcrypt.hashSync(password, 8);
+      const hashPassword = await bcrypt.hash(password, 8);
 
-      const user = userRepository.create({ login, password: hashPassword });
-      const { id: userId} = await userRepository.save(user);
+      // Создаем и сохраняем нового пользователя
+      const newUser = userRepository.create({ login, password: hashPassword });
+      await userRepository.save(newUser);
 
-      const accessToken = await TokenService.generateAccessToken(user);
-      const refreshToken = await TokenService.generateRefreshToken(user);
+      const [accessToken, refreshToken] = await Promise.all([
+        TokenService.generateAccessToken(newUser),
+        TokenService.generateRefreshToken(newUser)
+      ]);
 
-      const sessionData = {
-        user,
-        refreshToken,
-        fingerPrint: browserFingerprint?.hash
-      };
-
+      // Создаем и сохраняем сессию обновления
       const refreshSessionRepository = AppDataSource.getRepository(RefreshSession);
-      await refreshSessionRepository.save(refreshSessionRepository.create(sessionData)); // создаем хапись в бд о рефреш-сессии и сохраняем ее //
-      //const refreshSession = refreshSessionRepository.create(sessionData); // создаем хапись в бд о рефреш-сессии //
-      //await refreshSessionRepository.save(sessionData);
+      const refreshSession = refreshSessionRepository.create({
+        user: newUser,
+        refreshToken,
+        fingerPrint: fingerprint?.hash
+      });
+      await refreshSessionRepository.save(refreshSession);
 
       res.cookie('refreshToken', refreshToken, COOKIE_SETTINGS.REFRESH_TOKEN);
-
       res.status(200).send({ accessToken, accessTokenExpiration: ACCESS_TOKEN_EXPIRATION});
     } catch (error) {
       handleServerError(error as Error, res)
@@ -59,36 +61,43 @@ class AuthController {
   };
 
   static async signIn(req: Request, res: Response) {
+    const { fingerprint } = req;
+    const { login, password } = req.body;
+
+    if (!fingerprint || !fingerprint.hash) {
+      return res.status(400).send('Fingerprint is missing');
+    }
+
     try {
-      const browserFingerprint = req.fingerprint;
-      const { login, password } = req.body;
-
       const userRepository = AppDataSource.getRepository(User);
-
       const userData = await userRepository.findOneBy({ login });
+
       if (!userData) {
         return res.status(404).send('Пользователь не найден');
       }
 
-      const isPasswordValid = bcrypt.compareSync(password, userData.password);
+      // используется вместо синхронного bcrypt.compareSync, что улучшает производительность и предотвращает блокировку потока.
+      const isPasswordValid = await bcrypt.compare(password, userData.password);
 
       if (!isPasswordValid) {
         return res.status(401).send('Неправильный логин или пароль');
       }
 
-      const accessToken = await TokenService.generateAccessToken(userData);
-      const refreshToken = await TokenService.generateRefreshToken(userData);
+      const [accessToken, refreshToken] = await Promise.all([
+        TokenService.generateAccessToken(userData),
+        TokenService.generateRefreshToken(userData)
+      ]);
 
-      // создаем запись в бд
+      // Создание и сохранение новой сессии
       const refreshSessionRepository = AppDataSource.getRepository(RefreshSession);
-      const refreshSession = new RefreshSession();
-      refreshSession.user = userData; // Устанавливаем связь с пользователем
-      refreshSession.refreshToken = refreshToken;
-      refreshSession.fingerPrint = browserFingerprint?.hash || ''; // fixme небольшой костыль
+      const refreshSession = refreshSessionRepository.create({
+        user: userData,
+        refreshToken,
+        fingerPrint: fingerprint?.hash
+      });
       await refreshSessionRepository.save(refreshSession);
 
       res.cookie('refreshToken', refreshToken, COOKIE_SETTINGS.REFRESH_TOKEN);
-
       res.status(200).json({ accessToken, accessTokenExpiration: ACCESS_TOKEN_EXPIRATION});
     } catch (error) {
       handleServerError(error as Error, res)
@@ -99,11 +108,11 @@ class AuthController {
     const { fingerprint } = req;
     const currentRefreshToken = req.cookies.refreshToken;
 
-    try {
-      if (!currentRefreshToken) {
-        return res.status(401).send('Отсутствует refresh token');
-      }
+    if (!currentRefreshToken) {
+      return res.status(400).send('No refresh token provided');
+    }
 
+    try {
       const refreshSessionRepository = AppDataSource.getRepository(RefreshSession);
       const refreshFromDB = await refreshSessionRepository.findOneBy({ refreshToken: currentRefreshToken });
 
@@ -111,34 +120,34 @@ class AuthController {
         return res.status(401).send('Пользователь не авторизован');
       }
 
-      if (refreshFromDB?.fingerPrint !== fingerprint?.hash) { // на случай если угнали токены при рефреше сравниваем fingerprint из базы и fingerprint c запроса
+      // на случай если угнали токены при рефреше сравниваем fingerprint из базы и fingerprint c запроса
+      if (refreshFromDB?.fingerPrint !== fingerprint?.hash) {
         return res.status(401).send('Пользователь не авторизован');
       }
 
-      // удаляем refresh сессию из БД - ниже заменим на новую запись
+      // Удаляем текущую сессию перед созданием новой
       await refreshSessionRepository.remove(refreshFromDB);
 
-      const { id, login, password } = jwt.verify(currentRefreshToken, process.env.REFRESH_TOKEN_SECRET as string) as JwtPayload & TPayload;
-      //console.log(id, login, ' payload refresh id, login ');
+      const payload = jwt.verify(currentRefreshToken, process.env.REFRESH_TOKEN_SECRET as string) as JwtPayload & TPayload;
+      const { id, login, password } = payload;
 
-      // const actualPayload = { id, login, password };
+      // Генерация токенов параллельно для повышения производительности
+      const [newAccessToken, newRefreshToken] = await Promise.all([
+        TokenService.generateAccessToken({ id, login, password }),
+        TokenService.generateRefreshToken({ id, login, password })
+      ]);
 
-      const newAccessToken = await TokenService.generateAccessToken({ id, login, password });
-      const newRefreshToken = await TokenService.generateRefreshToken({ id, login, password });
-
-      const newSessionData = {
-        userId: id, // устанавливаем связь с табличкой user передаем только его id
+      // Создание новой сессии и сохранение в базе данных
+      const newRefreshSession = refreshSessionRepository.create({
+        user: { id }, // используем объект пользователя или его ID
         refreshToken: newRefreshToken,
         fingerPrint: fingerprint?.hash
-      };
+      });
+      await refreshSessionRepository.save(newRefreshSession);
 
-      const newRefreshSession = refreshSessionRepository.create(newSessionData);
-      await refreshSessionRepository.save(newSessionData);
-
-      //console.log(newRefreshSession, ' newRefreshSession Ты должна была быть создана why????');
-
+      // Установка нового refresh токена в куки
       res.cookie("refreshToken", newRefreshToken, COOKIE_SETTINGS.REFRESH_TOKEN);
-
+      // Возвращаем новый access токен и время его истечения
       return res.status(200).json({ accessToken: newAccessToken, accessTokenExpiration: ACCESS_TOKEN_EXPIRATION });
     } catch (error) {
       handleServerError(error as Error, res);
@@ -146,19 +155,22 @@ class AuthController {
   };
 
   static async logout(req: Request, res: Response) {
-    try {
-      const refreshToken = req.cookies.refreshToken;
-      const fingerprint = req.fingerprint;
+    const refreshToken = req.cookies.refreshToken;
 
-      //* удаляем табличку refresh сессии в бд */
+    if (!refreshToken) {
+      return res.status(400).send('No refresh token provided');
+    }
+
+    try {
+      // удаляем табличку refresh сессии в бд
       const refreshSessionRepository = AppDataSource.getRepository(RefreshSession);
       const refreshSession = await refreshSessionRepository.findOneBy({ refreshToken });
 
       if (refreshSession) {
-        const deletedRefreshSession = await refreshSessionRepository.remove(refreshSession);
+        await refreshSessionRepository.remove(refreshSession);
       }
 
-      //* очищаем cookie на стороне сервера */
+      // очищаем cookie на стороне сервера
       res.clearCookie('refreshToken');
 
       return res.status(200).send('logout success');

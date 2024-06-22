@@ -27,7 +27,7 @@ const LoginForm = () => {
     mode: "onBlur" // режим валидации ошибок - на onBlur (популярный)
   })
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    handleSignIn({ login: data.login, password: data.password });
+    await handleSignIn({ login: data.login, password: data.password });
   }
 
 
@@ -45,7 +45,7 @@ const LoginForm = () => {
         />
 
         {formState.errors.login &&
-            <span className={s.error_text}>{formState.errors.login.message}</span>
+          <span className={s.error_text}>{formState.errors.login.message}</span>
         }
       </div>
 
@@ -59,7 +59,7 @@ const LoginForm = () => {
           })}
         />
         {formState.errors.password &&
-            <span className={s.error_text}>{formState.errors.password.message}</span>
+          <span className={s.error_text}>{formState.errors.password.message}</span>
         }
       </div>
 

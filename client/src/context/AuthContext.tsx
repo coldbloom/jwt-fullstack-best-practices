@@ -3,15 +3,14 @@ import axios, {AxiosInstance, InternalAxiosRequestConfig} from "axios";
 
 import inMemoryJWT from "../services/inMemoryJWT";
 import showErrorMessage from "../services/showErrorMessage";
-//import { Loader } from "../components/loader/badZoom/loader";
 import { Zoom } from "../components/loader/zoom";
 
 type ContextProps = {
-  data: any; // Замените any на тип данных, который вы ожидаете хранить в контексте
+  data: string | null; // Заменить на тип данных, который вы ожидаете хранить в контексте
   handleFetchProtected: () => void;
   handleLogOut: () => void;
-  handleSignUp: (data: { login: string; password: string }) => void;
-  handleSignIn: (data: { login: string; password: string }) => void;
+  handleSignUp: (data: { login: string; password: string }) => Promise<void>;
+  handleSignIn: (data: { login: string; password: string }) => Promise<void>;
   isUserLogged: boolean;
   isAppReady: boolean;
 }
@@ -20,8 +19,8 @@ export const AuthContext = createContext<ContextProps>({
   data: null,
   handleFetchProtected: () => {},
   handleLogOut: () => {},
-  handleSignUp: () => {},
-  handleSignIn: () => {},
+  handleSignUp: async () => {},
+  handleSignIn: async () => {},
   isUserLogged: false,
   isAppReady: false,
 });
@@ -40,9 +39,7 @@ resourceClient.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export const instanceAxios: AxiosInstance = axios.create({
@@ -53,7 +50,7 @@ export const instanceAxios: AxiosInstance = axios.create({
 const AuthProvider = ({children}: {children: ReactNode}) => {
   const [isAppReady, setIsAppReady] = useState(false); // отвечает за готовность приложения к работе
   const [isUserLogged, setIsUserLogged] = useState(false); // является ли пользователь авторизованным
-  const [data, setData] = useState();
+  const [data, setData] = useState<string | null>(null);
 
   useEffect(() => {
     instanceAxios.post('auth/refresh')
@@ -79,6 +76,7 @@ const AuthProvider = ({children}: {children: ReactNode}) => {
     };
 
     window.addEventListener("storage", handlePersistedLogout);
+    return () => window.removeEventListener("storage", handlePersistedLogout);
   }, []);
 
   const handleFetchProtected = () => {

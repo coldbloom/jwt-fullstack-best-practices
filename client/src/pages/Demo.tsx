@@ -4,16 +4,18 @@ import { AuthContext} from "../context/AuthContext";
 const Demo = () => {
   const { data, handleLogOut, handleFetchProtected } = useContext(AuthContext);
 
+  console.log(typeof data, data, ' data');
+
   return (
     <div className='page'>
-      <p>{JSON.stringify(data)}</p>
+      <h1>Демо</h1>
+      <p>{data}</p>
       <button onClick={handleFetchProtected}>
         Запрос на защищенный роут
       </button>
       <button onClick={handleLogOut}>
         Выйти
       </button>
-      <h1>Демо</h1>
     </div>
   );
 };

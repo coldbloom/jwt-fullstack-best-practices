@@ -5,6 +5,10 @@ import {handleServerError} from "../utils/Errors";
 
 dotenv.config();
 
+if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+  throw new Error("ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET must be defined in environment variables");
+}
+
 type TPayload = {
   id: number;
   login: string;
@@ -14,14 +18,14 @@ type TPayload = {
 export class TokenService {
   static async generateAccessToken(payload: TPayload) {
     const { id, login, password } = payload;
-    return await jwt.sign({ id, login, password }, process.env.ACCESS_TOKEN_SECRET as string, {
+    return jwt.sign({id, login, password}, process.env.ACCESS_TOKEN_SECRET as string, {
       expiresIn: "30m",
     });
   }
 
   static async generateRefreshToken(payload: TPayload) {
     const { id, login, password } = payload;
-    return await jwt.sign({ id, login, password }, process.env.REFRESH_TOKEN_SECRET as string, {
+    return jwt.sign({id, login, password}, process.env.REFRESH_TOKEN_SECRET as string, {
       expiresIn: "15d",
     });
   }
@@ -40,8 +44,6 @@ export class TokenService {
         handleServerError(error, res, 403)
       }
 
-      // console.log(user, ' checkAccess');
-      // req.user = user;
       next();
     });
   }

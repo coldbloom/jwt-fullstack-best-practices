@@ -1,6 +1,6 @@
-# jwt authorization server app
+# jwt authorization example app
 
-## Запуск приложения локально
+## Запуск приложения локально (server)
 
 1. запустить команду в отдельно окне терминала для отслеживания изменений файлов TypeScript
     ```bash
@@ -11,9 +11,9 @@
    npm run dev
    ```
 
+## Запуск приложения локально (client)
 
-
-if (login === '123') {
-const error = new Error('Invalid login');
-throw error;
-}
+1. запустить команду в отдельно окне терминала для отслеживания изменений файлов TypeScript
+    ```bash
+   npm run start
+   ```

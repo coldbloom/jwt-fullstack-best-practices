@@ -1,10 +1,5 @@
 import { instanceAxios } from "../context/AuthContext";
 
-type TInMemoryJWT = {
-  token: string;
-  tokenExpiration?: string
-}
-
 export const inMemoryJWT = () => {
   let inMemoryJWT: string | null = null;
   let refreshTimeoutId: string | number | NodeJS.Timeout | null | undefined = null;
@@ -12,7 +7,6 @@ export const inMemoryJWT = () => {
   const getToken = () => inMemoryJWT;
 
   const setToken = (token: string, tokenExpiration: number) => {
-    console.log(tokenExpiration, ' tokenExpiration'); // fixme tokenExpiration - undefined
     inMemoryJWT = token;
     refreshToken(tokenExpiration);
   };
@@ -32,13 +26,11 @@ export const inMemoryJWT = () => {
 
   const refreshToken = (expiration: number) => {
     const timeoutTrigger = expiration - 10000;
-    console.log(timeoutTrigger, ' timeoutTrigger');
 
     refreshTimeoutId = setTimeout(() => {
       instanceAxios.post('/auth/refresh')
         .then(res => {
           const { accessToken, accessTokenExpiration } = res.data;
-          console.log(accessTokenExpiration, ' полученный из запроса', res.data);
           setToken(accessToken, accessTokenExpiration);
         })
         .catch(console.error)

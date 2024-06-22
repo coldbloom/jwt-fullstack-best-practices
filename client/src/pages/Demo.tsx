@@ -4,8 +4,6 @@ import { AuthContext} from "../context/AuthContext";
 const Demo = () => {
   const { data, handleLogOut, handleFetchProtected } = useContext(AuthContext);
 
-  console.log(typeof data, data, ' data');
-
   return (
     <div className='page'>
       <h1>Демо</h1>

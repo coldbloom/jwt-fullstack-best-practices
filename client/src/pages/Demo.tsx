@@ -8,7 +8,7 @@ const Demo = () => {
 
   return (
     <div className='page'>
-      <h1>Демо</h1>
+      <h1>Демо </h1>
       <p>{data}</p>
       <button onClick={handleFetchProtected}>
         Запрос на защищенный роут

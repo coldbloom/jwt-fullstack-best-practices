@@ -16,7 +16,6 @@ if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
 type TPayload = {
   id: number;
   login: string;
-  password: string; // hash password
 }
 
 class AuthController {
@@ -39,9 +38,11 @@ class AuthController {
       const newUser = userRepository.create({ login, password: hashPassword });
       await userRepository.save(newUser);
 
+      const { id } = newUser;
+
       const [accessToken, refreshToken] = await Promise.all([
-        TokenService.generateAccessToken(newUser),
-        TokenService.generateRefreshToken(newUser)
+        TokenService.generateAccessToken({ id, login }),
+        TokenService.generateRefreshToken({ id, login })
       ]);
 
       // Создаем и сохраняем сессию обновления
@@ -83,9 +84,11 @@ class AuthController {
         return res.status(401).send('Неправильный логин или пароль');
       }
 
+      const { id } = userData;
+
       const [accessToken, refreshToken] = await Promise.all([
-        TokenService.generateAccessToken(userData),
-        TokenService.generateRefreshToken(userData)
+        TokenService.generateAccessToken({ id, login }),
+        TokenService.generateRefreshToken({ id, login })
       ]);
 
       // Создание и сохранение новой сессии
@@ -129,12 +132,12 @@ class AuthController {
       await refreshSessionRepository.remove(refreshFromDB);
 
       const payload = jwt.verify(currentRefreshToken, process.env.REFRESH_TOKEN_SECRET as string) as JwtPayload & TPayload;
-      const { id, login, password } = payload;
+      const { id, login } = payload;
 
       // Генерация токенов параллельно для повышения производительности
       const [newAccessToken, newRefreshToken] = await Promise.all([
-        TokenService.generateAccessToken({ id, login, password }),
-        TokenService.generateRefreshToken({ id, login, password })
+        TokenService.generateAccessToken({ id, login }),
+        TokenService.generateRefreshToken({ id, login })
       ]);
 
       // Создание новой сессии и сохранение в базе данных

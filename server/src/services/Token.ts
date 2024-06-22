@@ -12,20 +12,19 @@ if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
 type TPayload = {
   id: number;
   login: string;
-  password: string;
 };
 
 export class TokenService {
   static async generateAccessToken(payload: TPayload) {
-    const { id, login, password } = payload;
-    return jwt.sign({id, login, password}, process.env.ACCESS_TOKEN_SECRET as string, {
+    const { id, login } = payload;
+    return jwt.sign({id, login}, process.env.ACCESS_TOKEN_SECRET as string, {
       expiresIn: "30m",
     });
   }
 
   static async generateRefreshToken(payload: TPayload) {
-    const { id, login, password } = payload;
-    return jwt.sign({id, login, password}, process.env.REFRESH_TOKEN_SECRET as string, {
+    const { id, login } = payload;
+    return jwt.sign({ id, login }, process.env.REFRESH_TOKEN_SECRET as string, {
       expiresIn: "15d",
     });
   }
